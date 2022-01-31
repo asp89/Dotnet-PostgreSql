@@ -25,6 +25,7 @@ namespace ConsoleApp
         {
             services
                 .AddSingleton<ConsoleApp>()
+                .AddSingleton<Database>()
             ;
         }
     }
