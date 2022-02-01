@@ -1,5 +1,6 @@
 using System;
 using Npgsql;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace ConsoleApp
@@ -17,8 +18,8 @@ namespace ConsoleApp
         {
             try
             {
-                // GetPostgreSqlVersion();
-                // WriteRecords();
+                GetPostgreSqlVersion();
+                WriteRecords();
                 FetchRecords();
             }
             catch (Exception e)
@@ -37,37 +38,30 @@ namespace ConsoleApp
 
         private void WriteRecords()
         {
-            NpgsqlConnection conn = new NpgsqlConnection(connectionString);
-            conn.Open();
-            var insertSQL = string.Format
+            string insertSQL = string.Format
             (
                 @"INSERT INTO public.patients(name, address, city, age, gender) 
-                VALUES('{0}', '{1}', '{2}','{3}', '{4}');",
-                "John Doe", "456 Street", "New York", "30", "Male"
+                VALUES(@name, @address, @city, @age, @gender);"
             );
-            var cmd = new NpgsqlCommand(insertSQL, conn);
-            cmd.ExecuteNonQuery();
+
+            Dictionary<string, object> parameters = new Dictionary<string, object>();
+            parameters.Add("@name", "Mathew Bane");
+            parameters.Add("@address", "879 Street");
+            parameters.Add("@city", "Washington");
+            parameters.Add("@age", 31);
+            parameters.Add("@gender", "Male");
+
+            int response = Database.ExecuteNonQuery(insertSQL, parameters);
+            string message = response == 1 ? "Successfully Inserted!" : "Failed to insert!";
+            Console.WriteLine(message);
         }
 
         private void FetchRecords()
         {
-            NpgsqlConnection conn = new NpgsqlConnection(connectionString);
-            conn.Open();
             string sqlQuery = "Select id, name, address, city, age, gender from public.patients";
-            using var cmd = new NpgsqlCommand(sqlQuery, conn);
-            using NpgsqlDataReader rdr = cmd.ExecuteReader();
-
-            while(rdr.Read())
-            {
-                if (rdr.HasRows)
-                {
-                    Console.WriteLine($"{rdr[0].ToString(),-4} {rdr[1],-10} {rdr[2],10} {rdr[3],10} {rdr[4],10} {rdr[5],10}");
-                } 
-                else
-                {
-                    Console.WriteLine("Records not found");
-                }
-            }
+            var records = Database.ExecuteQuery(sqlQuery);
+            string message = $"Fetched {records.Count} records";
+            Console.WriteLine(message);
         }
     }
 }
